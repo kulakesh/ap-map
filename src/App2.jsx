@@ -28,12 +28,14 @@ const districtColors = [
   "#72dffe",
 ];
 const layerNmaes = {
-  rivers: "Rivers",
-  nsHighway: "Roads",
-  labels: "Labels",
-  dtRoad: "District Roads",
-  railway: "Railways",
-  dtHq: "District HQ.",
+  rivers: "RIVERS",
+  roads: "ROADS",
+  labels: "LABELS",
+  agl: "ADVANCE LANDING GROUND (ALG)",
+  airport: "AIRPORTS",
+  checkgate: "CHECKGATES",
+  helipad: "HELIPADS",
+  hq: "DISTRICT HQ.",
 };
 function App2() {
   const [selectedDistrictGeo, setSelectedDistrictGeo] = useState(null);
@@ -42,11 +44,13 @@ function App2() {
     useState(null);
   const [layers, setLayers] = useState({
     rivers: true,
-    nsHighway: false,
+    roads: false,
     labels: false,
-    dtRoad: false,
-    railway: false,
-    dtHq: false,
+    agl: false,
+    airport: false,
+    checkgate: false,
+    helipad: false,
+    hq: false,
   });
   const [mapTransform, setMapTransform] = useState({
     x: 0,
@@ -192,6 +196,17 @@ function App2() {
           style={{marginTop: "-27px", marginLeft: "107px", width: "1278px", height: "900px" }}
           className="absolute inset-0 pointer-events-none"
       /> */}
+        <img
+            src="/img/boarders.png"
+            style={{
+              marginTop: "-27px",
+              marginLeft: "107px",
+              width: "1278px",
+              height: "900px",
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+
         {layers.rivers && (
           <img
             src="/img/rivers-new.png"
@@ -204,7 +219,7 @@ function App2() {
             className="absolute inset-0 pointer-events-none"
           />
         )}
-        {layers.nsHighway && (
+        {layers.roads && (
           <img
             src="/img/roads.png"
             style={{
@@ -219,6 +234,66 @@ function App2() {
         {layers.labels && (
           <img
             src="/img/labels.png"
+            style={{
+              marginTop: "-27px",
+              marginLeft: "107px",
+              width: "1278px",
+              height: "900px",
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+        )}
+        {layers.agl && (
+          <img
+            src="/img/agl.png"
+            style={{
+              marginTop: "-27px",
+              marginLeft: "107px",
+              width: "1278px",
+              height: "900px",
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+        )}
+        {layers.airport && (
+          <img
+            src="/img/airport.png"
+            style={{
+              marginTop: "-27px",
+              marginLeft: "107px",
+              width: "1278px",
+              height: "900px",
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+        )}
+        {layers.checkgate && (
+          <img
+            src="/img/checkgate.png"
+            style={{
+              marginTop: "-27px",
+              marginLeft: "107px",
+              width: "1278px",
+              height: "900px",
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+        )}
+        {layers.helipad && (
+          <img
+            src="/img/helipad.png"
+            style={{
+              marginTop: "-27px",
+              marginLeft: "107px",
+              width: "1278px",
+              height: "900px",
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+        )}
+        {layers.hq && (
+          <img
+            src="/img/hq.png"
             style={{
               marginTop: "-27px",
               marginLeft: "107px",
