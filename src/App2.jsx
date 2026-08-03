@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import {
   ComposableMap,
   Geographies,
@@ -30,27 +30,36 @@ const districtColors = [
 const layerNmaes = {
   rivers: "RIVERS",
   roads: "ROADS",
-  labels: "LABELS",
+  places: "PLACES",
   agl: "ADVANCE LANDING GROUND (ALG)",
   airport: "AIRPORTS",
   checkgate: "CHECKGATES",
   helipad: "HELIPADS",
   hq: "DISTRICT HQ.",
 };
+const imagePaths = [
+  "/img/rivers.png",
+  "/img/national-highway.png",
+  "/img/state-highway.png",
+  "/img/district-road.png",
+  "/img/railway.png",
+  "/img/district-hq.png",
+];
 function App2() {
-  const [selectedDistrictGeo, setSelectedDistrictGeo] = useState(null);
   const [closeButton, setCloseButton] = useState(false);
-  const [selectedDistrictProperties, setSelectedDistrictProperties] =
-    useState(null);
+  const [legendCollapsed, setLegendCollapsed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
+
   const [layers, setLayers] = useState({
-    rivers: true,
+    rivers: false,
     roads: false,
-    labels: false,
-    agl: false,
-    airport: false,
-    checkgate: false,
-    helipad: false,
-    hq: false,
+    places: true,
+    agl: true,
+    airport: true,
+    checkgate: true,
+    helipad: true,
+    hq: true,
   });
   const [mapTransform, setMapTransform] = useState({
     x: 0,
@@ -58,6 +67,34 @@ function App2() {
     scale: 1,
   });
   const mapRef = useRef(null);
+
+  useEffect(() => {
+    let loaded = 0;
+  
+    Promise.all(
+      imagePaths.map((src) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+  
+          img.onload = () => {
+            loaded++;
+            setProgress(Math.round((loaded / imagePaths.length) * 100));
+            resolve();
+          };
+  
+          img.onerror = () => {
+            loaded++;
+            setProgress(Math.round((loaded / imagePaths.length) * 100));
+            resolve();
+          };
+  
+          img.src = src;
+        });
+      })
+    ).then(() => {
+      setLoading(false);
+    });
+  }, []);
 
   const handleDistrictClick = (event, geo) => {
     if (closeButton) return;
@@ -75,15 +112,8 @@ function App2() {
       y: svgRect.height / 2 - clickY * zoom,
     });
 
-      setSelectedDistrictGeo(true);
       setCloseButton(true);
-      setSelectedDistrictProperties(geo.properties);
     };
-
-  const closePopup = () => {
-    setSelectedDistrictGeo(null);
-    setSelectedDistrictProperties(null);
-  };
 
   const toggleLayer = (layer) => {
     setLayers((prev) => ({
@@ -91,27 +121,80 @@ function App2() {
       [layer]: !prev[layer],
     }));
   };
+  
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
+        <div className="w-96 rounded-2xl bg-white p-8 shadow-2xl border text-center">
+  
+          <div className="mb-6">
+            <div className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
+          </div>
+  
+          <h2 className="text-xl font-bold">
+            Loading GIS Layers
+          </h2>
+  
+          <p className="mt-2 text-gray-500">
+            Preparing map...
+          </p>
+  
+          <div className="mt-6 h-3 w-full overflow-hidden rounded-full bg-gray-200">
+            <div
+              className="h-full rounded-full bg-blue-600 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+  
+          <p className="mt-3 text-sm font-semibold text-gray-600">
+            {progress}%
+          </p>
+  
+        </div>
+      </div>
+    );
+  }
+
   return (
     <> 
     {/* Buttons */}
-    <div className="fixed left-4 top-4 z-50 w-52 bg-white rounded-xl shadow-xl border">
-          <div className="bg-blue-700 text-white font-semibold p-3 rounded-t-xl">
-            Legend
-          </div>
+    <div
+  className={`fixed left-4 top-4 z-50 bg-white rounded-xl shadow-xl border transition-all duration-300 ${
+    legendCollapsed ? "w-14" : "w-52"
+  }`}
+>
+  <div className="flex items-center justify-between bg-blue-700 text-white p-3 rounded-t-xl">
+    {!legendCollapsed && (
+      <span className="font-semibold">Legend</span>
+    )}
 
-          {Object.entries(layers).map(([key, value]) => (
-            <button
-              key={key}
-              onClick={() => toggleLayer(key)}
-              className={`w-full flex items-center justify-between px-4 py-3 border-b
-            transition hover:bg-gray-100 ${value ? "bg-green-50" : "bg-white"}`}
-            >
-              <span className="capitalize">{layerNmaes[key]}</span>
+    <button
+      onClick={() => setLegendCollapsed((prev) => !prev)}
+      className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-800 transition"
+      title={legendCollapsed ? "Expand" : "Collapse"}
+    >
+      {legendCollapsed ? "▶" : "◀"}
+    </button>
+  </div>
 
-              <span>{value ? "👁" : " "}</span>
-            </button>
-          ))}
-        </div>
+  {!legendCollapsed && (
+    <>
+      {Object.entries(layers).map(([key, value]) => (
+        <button
+          key={key}
+          onClick={() => toggleLayer(key)}
+          className={`w-full flex items-center justify-between px-4 py-3 border-b transition hover:bg-gray-100 ${
+            value ? "bg-green-50" : "bg-white"
+          }`}
+        >
+          <span>{layerNmaes[key]}</span>
+
+          <span>{value ? "👁" : " "}</span>
+        </button>
+      ))}
+    </>
+  )}
+</div>
     <div
       className="relative inline-block bg-white"
       ref={mapRef}
@@ -190,118 +273,37 @@ function App2() {
             }
           </Geographies>
         </ComposableMap>
-        { console.log(closeButton) }
+        
         {/* <img
           src="/img/test-map.png"
           style={{marginTop: "-27px", marginLeft: "107px", width: "1278px", height: "900px" }}
           className="absolute inset-0 pointer-events-none"
       /> */}
-        <img
-            src="/img/boarders.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+        <LayerImage src="/img/boarders.png" />
 
         {layers.rivers && (
-          <img
-            src="/img/rivers-new.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+          <LayerImage src="/img/rivers.png" />
         )}
         {layers.roads && (
-          <img
-            src="/img/roads.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+          <LayerImage src="/img/roads.png" />
         )}
-        {layers.labels && (
-          <img
-            src="/img/labels.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+        {layers.places && (
+          <LayerImage src="/img/places.png" />
         )}
         {layers.agl && (
-          <img
-            src="/img/agl.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+          <LayerImage src="/img/agl.png" />
         )}
         {layers.airport && (
-          <img
-            src="/img/airport.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+          <LayerImage src="/img/airport.png" />
         )}
         {layers.checkgate && (
-          <img
-            src="/img/checkgate.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+          <LayerImage src="/img/checkgate.png" />
         )}
         {layers.helipad && (
-          <img
-            src="/img/helipad.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+          <LayerImage src="/img/helipad.png" />
         )}
         {layers.hq && (
-          <img
-            src="/img/hq.png"
-            style={{
-              marginTop: "-27px",
-              marginLeft: "107px",
-              width: "1278px",
-              height: "900px",
-            }}
-            className="absolute inset-0 pointer-events-none"
-          />
+          <LayerImage src="/img/hq.png" />
         )}
 
         
@@ -316,9 +318,7 @@ function App2() {
           scale: 1,
         });
     
-        setSelectedDistrictGeo(null);
         setCloseButton(false);
-        setSelectedDistrictProperties(null);
     
         window.scrollTo({
           top: 0,
@@ -355,5 +355,16 @@ function App2() {
     </>
   );
 }
-
+const LayerImage = ({ src }) => (
+  <img
+    src={src}
+    style={{
+      marginTop: "-27px",
+      marginLeft: "107px",
+      width: "1278px",
+      height: "900px",
+    }}
+    className="absolute inset-0 pointer-events-none"
+  />
+);
 export default App2;
