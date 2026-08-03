@@ -88,7 +88,7 @@ function App2() {
             resolve();
           };
   
-          img.src = src;
+          img.src = import.meta.env.BASE_URL + src;
         });
       })
     ).then(() => {
@@ -219,7 +219,7 @@ function App2() {
           width={1200}
           height={900}
         >
-          <Geographies geography={GEO_URL}>
+          <Geographies geography={`${import.meta.env.BASE_URL}${GEO_URL}`}>
             {({ geographies }) =>
               geographies.map((geo, index) => {
                 const centroid = geoCentroid(geo);
@@ -357,7 +357,7 @@ function App2() {
 }
 const LayerImage = ({ src }) => (
   <img
-    src={src}
+  src={`${import.meta.env.BASE_URL}${src}`}
     style={{
       marginTop: "-27px",
       marginLeft: "107px",
