@@ -8,7 +8,7 @@ import {
 import { geoCentroid } from "d3-geo";
 
 // const GEO_URL = "/arunachal_districts.geojson";
-const GEO_URL = "/export4.geojson";
+const GEO_URL = "export4.geojson";
 const districtColors = [
   "#bdd2ff",
   "#cbb6fb",
@@ -27,40 +27,85 @@ const districtColors = [
   "#cdf57a",
   "#72dffe",
 ];
-const layerNmaes = {
-  rivers: "RIVERS",
-  roads: "ROADS",
-  places: "PLACES",
-  agl: "ADVANCE LANDING GROUND (ALG)",
-  airport: "AIRPORTS",
-  checkgate: "CHECKGATES",
-  helipad: "HELIPADS",
-  hq: "DISTRICT HQ.",
+const map_layers = {
+  rivers: 
+  {
+    name: "RIVERS",
+    src: "img/rivers.png",
+    show: false,
+    visible_on_legend: true,
+  },
+  roads: 
+  {
+    name: "ROADS",
+    src: "img/roads.png",
+    show: false,
+    visible_on_legend: true,
+  },
+  frontier: 
+  {
+    name: "FRONTIER ROADS",
+    src: "img/frontier.png",
+    show: false,
+    visible_on_legend: true,
+  },
+  places: 
+  {
+    name: "PLACES",
+    src: "img/places.png",
+    show: true,
+    visible_on_legend: true,
+  },
+  agl: 
+  {
+    name: "ADVANCE LANDING GROUND (ALG)",
+    src: "img/alg.png",
+    show: false,
+  },
+  airport: 
+  {
+    name: "AIRPORTS",
+    src: "img/airport.png",
+    show: true,
+    visible_on_legend: true,
+  },
+  checkgate: 
+  {
+    name: "CHECKGATES",
+    src: "img/checkgate.png",
+    show: true,
+    visible_on_legend: true,
+  },
+  helipad: 
+  {
+    name: "HELIPADS",
+    src: "img/helipad.png",
+    show: true,
+    visible_on_legend: true,
+  },
+  hq: 
+  {
+    name: "DISTRICT HQ.",
+    src: "img/hq.png",
+    show: true,
+    visible_on_legend: true,
+  },
+  boarders:
+  {
+    name: "",
+    src: "img/boarders.png",
+    show: true,
+    visible_on_legend: false,
+  },
 };
-const imagePaths = [
-  "/img/rivers.png",
-  "/img/national-highway.png",
-  "/img/state-highway.png",
-  "/img/district-road.png",
-  "/img/railway.png",
-  "/img/district-hq.png",
-];
+
 function App2() {
   const [closeButton, setCloseButton] = useState(false);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [mapLayers, setMapLayers] = useState(map_layers);
 
-  const [layers, setLayers] = useState({
-    rivers: false,
-    roads: false,
-    places: true,
-    agl: true,
-    airport: true,
-    checkgate: true,
-    helipad: true,
-    hq: true,
-  });
   const [mapTransform, setMapTransform] = useState({
     x: 0,
     y: 0,
@@ -69,31 +114,54 @@ function App2() {
   const mapRef = useRef(null);
 
   useEffect(() => {
-    let loaded = 0;
+    const preloadImages = async () => {
+      const images = Object.values(map_layers)
+        .map((layer) => layer.src)
+        .filter(Boolean);
   
-    Promise.all(
-      imagePaths.map((src) => {
+      let loaded = 0;
+  
+      const loadImage = (src) => {
         return new Promise((resolve) => {
           const img = new Image();
   
           img.onload = () => {
             loaded++;
-            setProgress(Math.round((loaded / imagePaths.length) * 100));
+  
+            setProgress(
+              Math.round((loaded / images.length) * 100)
+            );
+  
             resolve();
           };
   
           img.onerror = () => {
+            console.error("Failed to preload:", src);
+  
             loaded++;
-            setProgress(Math.round((loaded / imagePaths.length) * 100));
+  
+            setProgress(
+              Math.round((loaded / images.length) * 100)
+            );
+  
             resolve();
           };
   
-          img.src = import.meta.env.BASE_URL + src;
+          img.src = src;
         });
-      })
-    ).then(() => {
-      setLoading(false);
-    });
+      };
+  
+      await Promise.all(images.map(loadImage));
+  
+      setProgress(100);
+  
+      // Small delay so the user sees 100%
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
+    };
+  
+    preloadImages();
   }, []);
 
   const handleDistrictClick = (event, geo) => {
@@ -115,12 +183,15 @@ function App2() {
       setCloseButton(true);
     };
 
-  const toggleLayer = (layer) => {
-    setLayers((prev) => ({
-      ...prev,
-      [layer]: !prev[layer],
-    }));
-  };
+    const toggleLayer = (key) => {
+      setMapLayers((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          show: !prev[key].show,
+        },
+      }));
+    };
   
   if (loading) {
     return (
@@ -179,17 +250,18 @@ function App2() {
 
   {!legendCollapsed && (
     <>
-      {Object.entries(layers).map(([key, value]) => (
+      {Object.entries(mapLayers)
+      .filter(([_, layer]) => layer.visible_on_legend)
+      .map(([key, layer]) => (
         <button
           key={key}
           onClick={() => toggleLayer(key)}
-          className={`w-full flex items-center justify-between px-4 py-3 border-b transition hover:bg-gray-100 ${
-            value ? "bg-green-50" : "bg-white"
+          className={`w-full flex items-center justify-between px-4 py-3 border-b ${
+            layer.show ? "bg-green-50" : "bg-white"
           }`}
         >
-          <span>{layerNmaes[key]}</span>
-
-          <span>{value ? "👁" : " "}</span>
+          <span>{layer.name}</span>
+          <span>{layer.show ? "👁️" : " "}</span>
         </button>
       ))}
     </>
@@ -247,26 +319,6 @@ function App2() {
                         },
                       }}
                     />
-
-                    {/* District Label */}
-                    {/* <Marker
-                      coordinates={[centroid[0] - 0.5, centroid[1] + 0.1]}
-                    >
-                      <text
-                        x={centroid[0]}
-                        y={centroid[1]}
-                        textAnchor="middle"
-                        alignmentBaseline="central"
-                        style={{
-                          fontFamily: "sans-serif",
-                          fontSize: 10,
-                          fill: "#000",
-                          pointerEvents: "none", // so clicks pass through to district
-                        }}
-                      >
-                        {name}
-                      </text>
-                    </Marker> */}
                   </React.Fragment>
                 );
               })
@@ -274,38 +326,14 @@ function App2() {
           </Geographies>
         </ComposableMap>
         
-        {/* <img
-          src="/img/test-map.png"
-          style={{marginTop: "-27px", marginLeft: "107px", width: "1278px", height: "900px" }}
-          className="absolute inset-0 pointer-events-none"
-      /> */}
-        <LayerImage src="/img/boarders.png" />
+        
+        {Object.entries(mapLayers).map(([key, layer]) => {
+          if (!layer.show) return null;
 
-        {layers.rivers && (
-          <LayerImage src="/img/rivers.png" />
-        )}
-        {layers.roads && (
-          <LayerImage src="/img/roads.png" />
-        )}
-        {layers.places && (
-          <LayerImage src="/img/places.png" />
-        )}
-        {layers.agl && (
-          <LayerImage src="/img/agl.png" />
-        )}
-        {layers.airport && (
-          <LayerImage src="/img/airport.png" />
-        )}
-        {layers.checkgate && (
-          <LayerImage src="/img/checkgate.png" />
-        )}
-        {layers.helipad && (
-          <LayerImage src="/img/helipad.png" />
-        )}
-        {layers.hq && (
-          <LayerImage src="/img/hq.png" />
-        )}
-
+          return (
+            <LayerImage key={key} src={layer.src} />
+          );
+        })}
         
       </div>
     </div>
