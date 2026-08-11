@@ -31,69 +31,70 @@ const map_layers = {
   rivers: 
   {
     name: "RIVERS",
-    src: "img/rivers.png",
+    src: "rivers.png",
     show: false,
     visible_on_legend: true,
   },
   roads: 
   {
     name: "ROADS",
-    src: "img/roads.png",
+    src: "roads.png",
     show: false,
     visible_on_legend: true,
   },
   frontier: 
   {
     name: "FRONTIER ROADS",
-    src: "img/frontier.png",
+    src: "frontier.png",
     show: false,
     visible_on_legend: true,
   },
   places: 
   {
     name: "PLACES",
-    src: "img/places.png",
+    src: "places.png",
     show: true,
     visible_on_legend: true,
   },
   agl: 
   {
     name: "ADVANCE LANDING GROUND (ALG)",
-    src: "img/alg.png",
-    show: false,
+    src: "alg.png",
+    show: true,
+    visible_on_legend: true,
   },
   airport: 
   {
     name: "AIRPORTS",
-    src: "img/airport.png",
+    src: "airport.png",
     show: true,
     visible_on_legend: true,
   },
   checkgate: 
   {
     name: "CHECKGATES",
-    src: "img/checkgate.png",
+    src: "checkgate.png",
     show: true,
     visible_on_legend: true,
   },
   helipad: 
   {
     name: "HELIPADS",
-    src: "img/helipad.png",
+    src: "helipad.png",
     show: true,
     visible_on_legend: true,
   },
   hq: 
   {
     name: "DISTRICT HQ.",
-    src: "img/hq.png",
+    src: "hq.png",
     show: true,
     visible_on_legend: true,
   },
   boarders:
   {
     name: "",
-    src: "img/boarders.png",
+    src: "boarders.png",
     show: true,
     visible_on_legend: false,
   },
@@ -147,7 +148,7 @@ function App2() {
             resolve();
           };
   
-          img.src = src;
+          img.src = "img2/" + src;
         });
       };
   
@@ -326,7 +327,13 @@ function App2() {
           </Geographies>
         </ComposableMap>
         
-        
+        <button
+          onClick={handleExit}
+          className="fixed top-6 right-6 z-[9999] rounded-xl bg-red-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-red-700"
+        >
+          Exit
+        </button>
+
         {Object.entries(mapLayers).map(([key, layer]) => {
           if (!layer.show) return null;
 
@@ -385,7 +392,7 @@ function App2() {
 }
 const LayerImage = ({ src }) => (
   <img
-  src={`${import.meta.env.BASE_URL}${src}`}
+  src={`${import.meta.env.BASE_URL}img2/${src}`}
     style={{
       marginTop: "-27px",
       marginLeft: "107px",
@@ -395,4 +402,14 @@ const LayerImage = ({ src }) => (
     className="absolute inset-0 pointer-events-none"
   />
 );
+const handleExit = () => {
+  const confirmed = window.confirm(
+    "Are you sure you want to exit Arunachal GIS?"
+  );
+
+  if (confirmed) {
+    window.electronAPI?.quitApp();
+  }
+};
+
 export default App2;

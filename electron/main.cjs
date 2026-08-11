@@ -1,13 +1,14 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1600,
     height: 950,
+    fullscreen: true,
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false
     }
@@ -19,6 +20,10 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  
+  ipcMain.on("quit-app", () => {
+    app.quit();
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0)
