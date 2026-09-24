@@ -35,10 +35,17 @@ const map_layers = {
     show: false,
     visible_on_legend: true,
   },
-  transport: 
+  roads: 
   {
-    name: "TRANSPORT",
-    src: "transport.png",
+    name: "ROADS",
+    src: "roads.png",
+    show: false,
+    visible_on_legend: true,
+  },
+  frontier: 
+  {
+    name: "FRONTIER ROADS",
+    src: "frontier.png",
     show: false,
     visible_on_legend: true,
   },
@@ -53,77 +60,42 @@ const map_layers = {
   {
     name: "ADVANCE LANDING GROUND (ALG)",
     src: "alg.png",
-    show: false,
+    show: true,
     visible_on_legend: true,
   },
   airport: 
   {
     name: "AIRPORTS",
     src: "airport.png",
-    show: false,
+    show: true,
     visible_on_legend: true,
   },
   checkgate: 
   {
     name: "CHECKGATES",
     src: "checkgate.png",
-    show: false,
+    show: true,
     visible_on_legend: true,
   },
   helipad: 
   {
     name: "HELIPADS",
     src: "helipad.png",
-    show: false,
+    show: true,
     visible_on_legend: true,
   },
   hq: 
   {
     name: "DISTRICT HQ.",
     src: "hq.png",
-    show: false,
-    visible_on_legend: true,
-  },
-  hydroelectric: 
-  {
-    name: "HYDROELECTRIC PROJECTS",
-    src: "hydroelectric.png",
-    show: false,
-    visible_on_legend: true,
-  },
-  tourist: 
-  {
-    name: "TOURIST CIRCUITS",
-    src: "tourist.png",
-    show: false,
-    visible_on_legend: true,
-  },
-  historical: 
-  {
-    name: "HISTORICAL PLACES",
-    src: "historical.png",
-    show: false,
-    visible_on_legend: true,
-  },
-  railway: 
-  {
-    name: "RAILWAYS",
-    src: "railway.png",
-    show: false,
-    visible_on_legend: true,
-  },
-  dtHq:
-  {
-    name: "DISTRICT HQ.",
-    src: "hq.png",
-    show: false,
+    show: true,
     visible_on_legend: true,
   },
   boarders:
   {
     name: "",
     src: "boarders.png",
-    show: false,
+    show: true,
     visible_on_legend: false,
   },
 };
@@ -134,6 +106,7 @@ function App2() {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [mapLayers, setMapLayers] = useState(map_layers);
+  const [selectedDistrictGeo, setSelectedDistrictGeo] = useState(null);
 
   const [mapTransform, setMapTransform] = useState({
     x: 0,
@@ -176,7 +149,7 @@ function App2() {
             resolve();
           };
   
-          img.src = "img3/" + src;
+          img.src = "img2/" + src;
         });
       };
   
@@ -209,18 +182,19 @@ function App2() {
       y: svgRect.height / 2 - clickY * zoom,
     });
 
-      setCloseButton(true);
-    };
+    setSelectedDistrictGeo(geo);
+    setCloseButton(true);
+  };
 
-    const toggleLayer = (key) => {
-      setMapLayers((prev) => ({
-        ...prev,
-        [key]: {
-          ...prev[key],
-          show: !prev[key].show,
-        },
-      }));
-    };
+  const toggleLayer = (key) => {
+    setMapLayers((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        show: !prev[key].show,
+      },
+    }));
+  };
   
   if (loading) {
     return (
@@ -228,7 +202,7 @@ function App2() {
         <div className="w-96 rounded-2xl bg-white p-8 shadow-2xl border text-center">
   
           <div className="mb-6">
-            <div className="mx-auto h-14 w-16 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
+            <div className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
           </div>
   
           <h2 className="text-xl font-bold">
@@ -257,73 +231,45 @@ function App2() {
 
   return (
     <> 
-    
-    {/* Legend */}
-<div
-  className={`fixed left-4 top-4 z-50 bg-white rounded-lg shadow-xl border transition-all duration-300 ${
-    legendCollapsed ? "w-14" : "w-48"
+    {/* Buttons */}
+    <div
+  className={`fixed left-4 top-4 z-50 bg-white rounded-xl shadow-xl border transition-all duration-300 ${
+    legendCollapsed ? "w-14" : "w-52"
   }`}
 >
-  {/* Header */}
-  <div
-    className={`flex items-center justify-between bg-blue-700 text-white ${
-      legendCollapsed ? "p-2" : "px-3 py-2"
-    } rounded-t-lg`}
-  >
+  <div className="flex items-center justify-between bg-blue-700 text-white p-3 rounded-t-xl">
     {!legendCollapsed && (
-      <span className="text-sm font-semibold">
-        Legend
-      </span>
+      <span className="font-semibold">Legend</span>
     )}
 
     <button
       onClick={() => setLegendCollapsed((prev) => !prev)}
-      className="ml-auto flex h-7 w-7 items-center justify-center rounded-md hover:bg-blue-800 transition"
+      className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-800 transition"
       title={legendCollapsed ? "Expand" : "Collapse"}
     >
       {legendCollapsed ? "▶" : "◀"}
     </button>
   </div>
 
-  {/* Legend items */}
   {!legendCollapsed && (
-    <div className="max-h-[70vh] overflow-y-auto">
+    <>
       {Object.entries(mapLayers)
-        .filter(([_, layer]) => layer.visible_on_legend)
-        .map(([key, layer]) => (
-          <button
-            key={key}
-            onClick={() => toggleLayer(key)}
-            className={`w-full flex items-center gap-2 px-2 py-2 border-b text-left
-              transition hover:bg-gray-100
-              ${layer.show ? "bg-green-50" : "bg-white"}
-            `}
-          >
-            {/* Layer image icon */}
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded border bg-white overflow-hidden">
-              <img
-                src={`${import.meta.env.BASE_URL}icon/${layer.src}`}
-                alt=""
-                className="h-full w-full object-contain"
-              />
-            </div>
-
-            {/* Layer name */}
-            <span className="flex-1 text-xs font-medium leading-tight">
-              {layer.name}
-            </span>
-
-            {/* Visibility */}
-            <span className="text-sm">
-              {layer.show ? "👁️" : ""}
-            </span>
-          </button>
-        ))}
-    </div>
+      .filter(([_, layer]) => layer.visible_on_legend)
+      .map(([key, layer]) => (
+        <button
+          key={key}
+          onClick={() => toggleLayer(key)}
+          className={`w-full flex items-center justify-between px-4 py-3 border-b ${
+            layer.show ? "bg-green-50" : "bg-white"
+          }`}
+        >
+          <span>{layer.name}</span>
+          <span>{layer.show ? "👁️" : " "}</span>
+        </button>
+      ))}
+    </>
   )}
 </div>
-
-
     <div
       className="relative inline-block bg-white"
       ref={mapRef}
@@ -351,6 +297,9 @@ function App2() {
           <Geographies geography={`${import.meta.env.BASE_URL}${GEO_URL}`}>
             {({ geographies }) =>
               geographies.map((geo, index) => {
+                if (closeButton && geo.rsmKey !== selectedDistrictGeo?.rsmKey) {
+                  return null;
+                }
                 const centroid = geoCentroid(geo);
                 const name = geo.properties.district || geo.properties.name;
                 return (
@@ -363,7 +312,7 @@ function App2() {
                         default: {
                           fill: districtColors[index % districtColors.length],
                           stroke: "#000",
-                          strokeWidth: 0.5,
+                          strokeWidth: closeButton && selectedDistrictGeo ? 0 : 0.5,
                           outline: "none",
                         },
                         hover: {
@@ -397,7 +346,97 @@ function App2() {
             <LayerImage key={key} src={layer.src} />
           );
         })}
-        
+        {closeButton && selectedDistrictGeo && (
+          <ComposableMap
+            projection="geoMercator"
+            projectionConfig={{
+              scale: 10000,
+              center: [94.5, 27.2],
+            }}
+            width={1200}
+            height={900}
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              marginTop: "80px",
+            }}
+          >
+            <Geographies
+              geography={`${import.meta.env.BASE_URL}${GEO_URL}`}
+            >
+              {({ geographies }) =>
+                geographies.map((geo) => {
+
+                  // Don't mask the selected district
+                  if (
+                    geo.rsmKey === selectedDistrictGeo.rsmKey
+                  ) {
+                    return null;
+                  }
+
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      style={{
+                        default: {
+                          fill: "#ffffff",
+                          // stroke: "#ffffff",
+                          // strokeWidth: 1,
+                          outline: "none",
+                        },
+                      }}
+                    />
+                  );
+                })
+              }
+            </Geographies>
+          </ComposableMap>
+        )}
+
+        {closeButton && selectedDistrictGeo && (
+          <div>
+          <ComposableMap
+            projection="geoMercator"
+            projectionConfig={{
+              scale: 10000,
+              center: [94.5, 27.2],
+            }}
+            width={1200}
+            height={900}
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              marginTop: "80px",
+              marginRight: "3px",
+            }}
+          >
+            <Geographies
+              geography={{
+                type: "FeatureCollection",
+                features: [selectedDistrictGeo],
+              }}
+              
+            >
+              {({ geographies }) =>
+                geographies.map((geo) => (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    style={{
+                      default: {
+                        fill: "transparent",
+                        // stroke: "#000",
+                        // strokeWidth: 2,
+                        outline: "none",
+                      },
+                    }}
+                  />
+                ))
+              }
+            </Geographies>
+          </ComposableMap>
+          </div>
+        )}
+
       </div>
     </div>
     {closeButton && (
@@ -448,7 +487,7 @@ function App2() {
 }
 const LayerImage = ({ src }) => (
   <img
-  src={`${import.meta.env.BASE_URL}img3/${src}`}
+  src={`${import.meta.env.BASE_URL}img2/${src}`}
     style={{
       marginTop: "-27px",
       marginLeft: "107px",
